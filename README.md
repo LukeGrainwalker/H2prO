@@ -1,2 +1,2 @@
-# hatch_the_egg
-A electronic egg that you can etch
+# H2prO
+An electronic device that reminds you to drink water
