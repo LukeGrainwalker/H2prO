@@ -1,11 +1,13 @@
+#include "H2prO.hpp"
+
 
 class H2prO {
 	public:
-		int emotion;
-		int evalstate();
+		enum emotion device_emotion;
+		enum emotion process(enum action, float time);
 };
 
-int H2prO::evalstate() {
-	return 0;
+enum emotion H2prO::process(enum action, float time) {
+	return DEFAULT;
 }
 
