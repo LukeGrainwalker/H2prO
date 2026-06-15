@@ -1,5 +1,7 @@
 #include <Wire.h>
 
+#include <H2prO.hpp>
+
 #define MPU_ADDR 0x68  // Default I2C address of MPU6050
 #define ACC_RANGE 2 // +-2g
 #define GYRO_RANGE 250 // +- 250°/s
