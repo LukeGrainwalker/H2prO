@@ -1,7 +1,6 @@
 #ifndef GYRO_HPP
 #define GYRO_HPP
 
-#include <cstdint>
 #include "Arduino.h"
 #include "Wire.h"
 
@@ -33,27 +32,31 @@ struct Gyroscope {
     int16_t x, y, z;
 };
 
-struct Gyro_RawSample {
+struct RawSample {
   float temp;
   struct Acceleration acc;
   struct Gyroscope gyro;
 };
 
 class Gyro {
-    public:
-        int roll_base;
-        int i2c_address;
+public:
+    int i2c_address;
 
-    Gyro() {}
-        
-    void request_data(unsigned int start, int len);
-    struct Acceleration read_acc();
+    Gyro();
+    Gyro(int address);
+    
+    int setup(); // power on gyro and do general setup
+    // Read the raw values from the gyro, accelerometer and temperature sensor.
+    void raw_acc(struct Acceleration* acc);
+    void read_acc(struct Acceleration* acc);
+    void read_all(struct Gyro_RawSample);
+    void read_all(struct RawSample* sample);
+    
     void print_acc(struct Acceleration* acc);
-    void print_all(struct Gyro_RawSample* sample);
-    struct Gyro_RawSample read_all();
-
-    /* Read the raw values from the gyro, accelerometer and temperature sensor. */
-    struct Gyro_RawSample gyro_read_all()
+    void print_all(struct RawSample* sample);
+    
+private:
+    void request_data(unsigned int start, int len);
 };
 
 
