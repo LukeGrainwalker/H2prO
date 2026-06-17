@@ -1,189 +1,133 @@
 #include <Wire.h>
+#include "Gyrosensor.hpp"
 
-#include <H2prO.hpp>
+#define MPU_ADDR 0x68 // default I2C address of MPU6050
+#define DEFAULT_ROLLBASE 90
 
-#define MPU_ADDR 0x68  // Default I2C address of MPU6050
-#define ACC_RANGE 2 // +-2g
-#define GYRO_RANGE 250 // +- 250°/s
-#define GYRO_REG_ACC_START 0x3B // start register for acceleration data
-#define GYRO_REG_ACC_SIZE 6
-#define GYRO_REG_GYRO_START 0x43 // start register for gyroscope data
-#define GYRO_REG_GYRO_SIZE 6
-#define GYRO_REG_TEMP_START 0x41 // start register for temperature data
-#define GYRO_REG_TEMP_SIZE 2
+Gyro gyro = Gyro();
 
-#define ROLL_BASE 90
-
-/*
-// Wiring for MPU6050:
-// Sensor | Arduino UNO
-//  VCC   ->  3.3V
-//  GND   ->  GND
-//  SCL   ->  A5
-//  SDA   ->  A4
-//  AD0   ->  GND
-*/
-
-struct Acceleration {
-  int16_t x, y, z;
+enum STATE {
+    LED_IDLE = 0,
+    LED_DRINKING,
+    LED_WARNING,
+    LED_ALERT
 };
 
-struct Gyroscope {
-  int16_t x, y, z;
+struct TimeThreshold {
+    int lower, higher;
 };
 
-struct Gyro_RawSample {
-  float temp;
-  struct Acceleration acc;
-  struct Gyroscope gyro;
-};
+int RED = 9;
+int GREEN = 10;
+int BLUE = 11;
+int BUZZER_PIN = 8;
 
-void gyro_print_acc(struct Acceleration* acc);
-void gyro_print_all(struct Gyro_RawSample* sample);
-void gyro_request_data(unsigned int start, int len);
+enum STATE led_state = LED_IDLE;
+unsigned long last_hydration;
+unsigned int time_diff;
+bool started_drinking = false;
+struct TimeThreshold warningThres;
+struct TimeThreshold alertThres;
 
-void gyro_request_data(unsigned int start, int len) {
-  Wire.beginTransmission(MPU_ADDR);
-  Wire.write(start);
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU_ADDR, len, true);
-}
 
-/*
- * Read the raw values from the gyro, accelerometer and temperature sensor.
- */
-struct Gyro_RawSample gyro_read_all() {
+void setup() {
+    Serial.begin(9600);
 
-  struct Gyro_RawSample sample;
-  gyro_request_data(GYRO_REG_ACC_START, 14);
-
-  // consume accelerometer readings
-  sample.acc.x = (Wire.read() << 8) | Wire.read();
-  sample.acc.y = (Wire.read() << 8) | Wire.read();
-  sample.acc.z = (Wire.read() << 8) | Wire.read();
-  // consume temperature readings
-  sample.temp = (Wire.read() << 8) | Wire.read();
-  // consume gyro readings
-  sample.gyro.x = (Wire.read() << 8) | Wire.read();
-  sample.gyro.y = (Wire.read() << 8) | Wire.read();
-  sample.gyro.z = (Wire.read() << 8) | Wire.read();
-
-  return sample;
-}
-
-struct Acceleration gyro_read_acc() {
-
-  struct Acceleration acc;
-  gyro_request_data(GYRO_REG_ACC_START, GYRO_REG_ACC_SIZE);
-
-  acc.x = (Wire.read() << 8) | Wire.read();
-  acc.y = (Wire.read() << 8) | Wire.read();
-  acc.z = (Wire.read() << 8) | Wire.read();
-
-  return acc;
-}
-
-void gyro_print_all(struct Gyro_RawSample* sample) {
-  Serial.println("--- Raw Gyro Readings ---");
-  gyro_print_acc(&sample->acc);
-
-  Serial.print("Gyroscope:");
-  Serial.print("x=");
-  Serial.print(sample->gyro.x);
-  Serial.print(", y= ");
-  Serial.print(sample->gyro.y);
-  Serial.print(", z= ");
-  Serial.println(sample->gyro.z);
-  Serial.println("");
-}
-
-void gyro_print_acc(struct Acceleration* acc) {
-  Serial.print("Accelerometer: ");
-  Serial.print("x= ");
-  Serial.print(acc->x);
-  Serial.print(", y= ");
-  Serial.print(acc->y);
-  Serial.print(", z= ");
-  Serial.println(acc->z);
-}
-
-void avg_samples(struct Acceleration* dst, struct Acceleration* src_arr, int len) {
-  dst->x = dst->y = dst->z = 0;
-
-  for (int i = 0; i < len; i++) {
-    dst->x += src_arr[i].x;
-    dst->y += src_arr[i].y;
-    dst->z += src_arr[i].z;
-  }
-
-  dst->x = dst->x / len;
-  dst->y = dst->y / len;
-  dst->z = dst->z / len;
+    gyro.setup();
+    Serial.println("MPU6050 Initialized.");
+    
+    last_hydration = millis();
+    //warningThres = { .lower = 30, .higher = 60};
+    //alertThres = { .lower = 60, .higher = 90};
+    warningThres = { .lower = 2*60, .higher = 3*60};
+    alertThres = { .lower = 3*60, .higher = 5*60};
 }
 
 /*
 what is drinking?
-roll base = -90°
-stationary = -110° - -75°
-drinking = -110° - -180°, 90° - 180°, -75° - 135°
 
-roll base = 90°
-stationary = 75° - 110°
-drinking = -100° - 75°, -90° - 110°
+The gyro can either be mounted with the x axis pointing downwards or upwards.
+Depending on the orientation of the sensor the roll is 90° or -90°.
+Therefore we need to adjust the angles that correspond to the sensor being stationary (e. g. on the desk).
+Drinking means the angle measured is outside of the specified range of stationary.
+
+When the x axis is pointing upwards:
+    roll base = -90°
+    stationary = -110° - -75°
+
+When the x axis is pointing downwards (preferred):
+    roll base = 90° (x axis is pointing downwards)
+    stationary = 75° - 110°
 */
 bool is_drinking() {
-  float ax, ay, az;
-  float roll = 0;
-  struct Acceleration acc_data;
+    float roll = 0;
+    struct Acceleration acc_data;
 
-  for (int i = 0; i < 10; i++) {
-    acc_data = gyro_read_acc();
+    gyro.read_acc(&acc_data);
+    gyro.print_acc(&acc_data);
+    roll = atan2(-acc_data.x, acc_data.z) * 180 / PI;
 
-    ax = acc_data.x;
-    az = acc_data.z;
-    roll += atan2(-ax, az) * 180 / PI;
-    delay(2);
-  }
+    //Serial.print("roll: ");
+    //Serial.println(roll);
 
-  roll = roll / 10;
-
-  //
-  if (ROLL_BASE > 0) {
-    if (roll >= 75 && roll <= 110) {
-      return false;
+    if (DEFAULT_ROLLBASE > 0) {
+        if (roll >= 60 && roll <= 130) return false;
+    } else {
+        if (roll >= -110 && roll <= -75) return false;
     }
-  } else {
-    if (roll >= -110 && roll <= -75) {
-      return false;
-    }
-  }
 
-  return true;
+    return true;
 }
 
-void setup() {
-  Wire.begin();
-  Serial.begin(9600);
+unsigned int get_seconds(unsigned long time) {
+    return (time / 1000);
+}
 
-  Wire.beginTransmission(MPU_ADDR);
-  Wire.write(0x6B);           // PWR_MGMT_1 register
-  Wire.write(0x00);           // Wake up MPU6050 (set sleep = 0)
-  Wire.endTransmission(true);
-
-  // Set accelerometer range to ±2g (most stable)
-  Wire.beginTransmission(MPU_ADDR);
-  Wire.write(0x1C);           // ACCEL_CONFIG register
-  Wire.write(0x00);           // ±2g range
-  Wire.endTransmission(true);
-
-  Serial.println("MPU6050 Initialized for Raw Accelerometer Readings");
+void set_led_color(int r, int g, int b) {
+    analogWrite(RED, r);
+    analogWrite(GREEN, g);
+    analogWrite(BLUE, b);
 }
 
 void loop() {
-  if (is_drinking()) {
-    Serial.println("Is Driking!!!");
-  }
+    if (is_drinking()) {
+        if (led_state != LED_DRINKING) {
+            led_state = LED_DRINKING;
+            set_led_color(0, 255, 0);
+        }
 
-  //float pitch = atan2(ay, sqrt(ax * ax + az * az)) * 180 / PI;
-  delay(200);
+        if (!started_drinking) {
+            last_hydration = millis();
+            started_drinking = true;
+        }
+
+    } else {
+        if (started_drinking) {
+            started_drinking = false;
+            last_hydration = millis();
+
+            if (led_state != LED_IDLE) {
+                led_state = LED_IDLE;
+                set_led_color(0, 0, 255);
+            }
+        }
+
+        time_diff = get_seconds(millis()) - get_seconds(last_hydration);
+        if (time_diff >= warningThres.lower && time_diff < warningThres.higher) {
+            // WARNING
+            if (led_state != LED_WARNING) {
+                set_led_color(255, 255, 0);
+                led_state = LED_WARNING;
+            }
+        } else if (time_diff >= alertThres.lower && time_diff < alertThres.higher) {
+            // ALERT
+            if (led_state != LED_ALERT) {
+                set_led_color(255, 0, 0);
+                led_state = LED_ALERT;
+            }
+            // move servo
+        } else {
+            // DIE
+        }
+    }
 }
