@@ -1,21 +1,21 @@
 
 class Output{
-	privete:
+	private:
 		int color;
 		bool buzzing;
 		int pinr;
 		int ping;
-		int binb;
+		int pinb;
 	public:
 		int setEmotion(enum emotion e);
 		Output(int pr, int pg, int pb) {
-			pinr = pr;
-			ping = pg;
-			pinb = pb;
+			this->pinr = pr;
+			this->ping = pg;
+			this->pinb = pb;
 			pinMode(pinr, OUTPUT);
 			pinMode(ping, OUTPUT);
 			pinMode(pinb, OUTPUT);
 		}
-}
+};
 
 
