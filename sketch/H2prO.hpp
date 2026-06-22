@@ -8,7 +8,7 @@ enum emotion {
 	ANGRY,
 	HAPY,
 	FRUSTRATED,
-	DEFAULT,
+	DEFAULT_EMOTION,
 	INTERESTED,
 	DISAPOINTED,
 	SUPRISED,
@@ -20,7 +20,7 @@ enum emotion {
 
 class H2prO {
 	public:
-		enum emotion device_emotion = DEFAULT;
+		enum emotion device_emotion = DEFAULT_EMOTION;
 		enum emotion process(enum action, float time);
 		float getTime();
 		H2prO(float ideal_time) {
@@ -30,6 +30,3 @@ class H2prO {
 		float drink_time;
 		float ideal;
 };
-
-
-
