@@ -29,7 +29,7 @@ enum emotion H2prO::process(enum action a, float time) {
 			} else if (deltat > 60) {
 				device_emotion = ANXIOUS;
 			} else if (deltat > 30) {
-				device_emotion = ANGRY;
+				device_emotion = SUPORTIVE;
 			} else {
 				device_emotion = DEFAULT;
 			}
