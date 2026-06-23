@@ -48,7 +48,6 @@ bool is_drinking() {
   struct Acceleration acc_data;
 
   gyro.read_acc(&acc_data);
-  //gyro.print_acc(&acc_data);
 
   NormalizedVector vec = NormalizedVector(
     acc_data.x,
