@@ -2,6 +2,7 @@
 #include "Util.hpp"
 #include "LED.hpp"
 #include "Gyrosensor.hpp"
+#include "pitches.h"
 
 #define MPU_ADDR 0x68 // default I2C address of MPU6050
 enum STATE { LED_IDLE = 0, LED_DRINKING, LED_WARNING, LED_ALERT };
@@ -28,10 +29,9 @@ RGBLed rgb_led = RGBLed(RED, GREEN, BLUE, Color(0, 0, 255), COMMON_ANODE);
 void setup() {
   Serial.begin(9600);
 
-  gyro.setup();
+  rgb_led.update();
+  //gyro.setup();
   Serial.println("MPU6050 Initialized.");
-
-  //rgb_led.ensure_state(LED_IDLE, Color(0, 0, 255));
 
   last_hydration = millis();
   // warningThres = { .lower = 30, .higher = 60};
@@ -69,7 +69,7 @@ unsigned int get_seconds(unsigned long time) {
 }
 
 void loop() {
-  if (is_drinking()) {
+  if (/*is_drinking()*/false) {
     rgb_led.ensure_state(LED_DRINKING, Color(0, 255, 0));
   
     if (!started_drinking) {
@@ -97,6 +97,15 @@ void loop() {
     }
   }
 
+  /* tone(7, NOTE_A3, 250);
+  delay(50);
+  tone(7, NOTE_E4, 500);
   delay(100);
+  tone(7, NOTE_B3, 250);
+  delay(50);
+  tone(7, NOTE_E4, 250);
+  delay(50); */
+
+  delay(1000);
 
 }
