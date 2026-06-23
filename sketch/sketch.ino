@@ -1,17 +1,10 @@
 #include <Wire.h>
 #include "Util.hpp"
+#include "LED.hpp"
 #include "Gyrosensor.hpp"
 
 #define MPU_ADDR 0x68 // default I2C address of MPU6050
-#define DEFAULT_ROLLBASE 90
-#define GYRO_1G 16384
-
-Gyro gyro = Gyro();
-NormalizedVector base_vec = NormalizedVector(-GYRO_1G, 0, 0);
-//RGBLed rgb_led = RGBLed();
-
 enum STATE { LED_IDLE = 0, LED_DRINKING, LED_WARNING, LED_ALERT };
-
 struct TimeThreshold {
   int lower, higher;
 };
@@ -28,11 +21,17 @@ bool started_drinking = false;
 struct TimeThreshold warningThres;
 struct TimeThreshold alertThres;
 
+Gyro gyro = Gyro();
+NormalizedVector base_vec = NormalizedVector(-GYRO_1G, 0, 0);
+RGBLed rgb_led = RGBLed(RED, GREEN, BLUE, Color(0, 0, 255), COMMON_ANODE);
+
 void setup() {
   Serial.begin(9600);
 
   gyro.setup();
   Serial.println("MPU6050 Initialized.");
+
+  //rgb_led.ensure_state(LED_IDLE, Color(0, 0, 255));
 
   last_hydration = millis();
   // warningThres = { .lower = 30, .higher = 60};
@@ -49,7 +48,7 @@ bool is_drinking() {
   struct Acceleration acc_data;
 
   gyro.read_acc(&acc_data);
-  gyro.print_acc(&acc_data);
+  //gyro.print_acc(&acc_data);
 
   NormalizedVector vec = NormalizedVector(
     acc_data.x,
@@ -58,10 +57,9 @@ bool is_drinking() {
   );
 
   double angle = vec.scalar_multiply(&base_vec) * 180 / PI;
-  //Serial.print("Angle: "); Serial.println(angle);
 
   if (angle >= 45) {
-    return true
+    return true;
   }
 
   return false;
@@ -72,47 +70,34 @@ unsigned int get_seconds(unsigned long time) {
 }
 
 void loop() {
-  is_drinking();
-  /* if (is_drinking()) {
-    if (led_state != LED_DRINKING) {
-      led_state = LED_DRINKING;
-      set_led_color(0, 255, 0);
-    }
-
+  if (is_drinking()) {
+    rgb_led.ensure_state(LED_DRINKING, Color(0, 255, 0));
+  
     if (!started_drinking) {
       last_hydration = millis();
       started_drinking = true;
     }
-
   } else {
     if (started_drinking) {
       started_drinking = false;
       last_hydration = millis();
 
-      if (led_state != LED_IDLE) {
-        led_state = LED_IDLE;
-        set_led_color(0, 0, 255);
-      }
+      rgb_led.ensure_state(LED_IDLE, Color(0, 0, 255));
     }
 
     time_diff = get_seconds(millis()) - get_seconds(last_hydration);
     if (time_diff >= warningThres.lower && time_diff < warningThres.higher) {
       // WARNING
-      if (led_state != LED_WARNING) {
-        set_led_color(255, 255, 0);
-        led_state = LED_WARNING;
-      }
+      rgb_led.ensure_state(LED_WARNING, Color(255, 255, 0));
     } else if (time_diff >= alertThres.lower && time_diff < alertThres.higher) {
       // ALERT
-      if (led_state != LED_ALERT) {
-        set_led_color(255, 0, 0);
-        led_state = LED_ALERT;
-      }
+      rgb_led.ensure_state(LED_ALERT, Color(255, 0, 0));
       // move servo
     } else {
       // DIE
     }
-  } */
+  }
 
-  delay(250);
+  delay(100);
+
 }

@@ -6,8 +6,10 @@
 class Color {
 public:
   int red, green, blue;
-
+  Color();
   Color(int r, int g, int b);
+  void set(int r, int g, int b);
+  void set(Color clr);
   bool is_equal(Color clr);
   bool is_equal(int r, int g, int b);
 };
@@ -32,12 +34,12 @@ private:
   int state;
   int pin_r, pin_g, pin_b;
   Color color;
-  enum LEDType type;
+  enum LEDType type = COMMON_CATHODE;
 public:
   RGBLed(int p_r, int p_g, int p_b);
+  RGBLed(int p_r, int p_g, int p_b, Color clr);
+  RGBLed(int p_r, int p_g, int p_b, Color clr, enum LEDType _type);
 
-  void on();
-  void off();
   void update();
   enum LEDType get_type();
   void set_type(enum LEDType);
@@ -45,6 +47,7 @@ public:
   // color setting
   void set_color(Color clr);
   void set_color(int r, int g, int b);
+  void print_color();
 
   // state management
   int ensure_color(Color clr);

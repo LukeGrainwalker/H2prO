@@ -6,6 +6,18 @@ Color::Color(int r, int g, int b) {
     blue = b & 0xFF;
 }
 
+Color::Color() {
+    red = 0, green = 0, blue = 0;
+}
+
+void Color::set(int r, int g, int b) {
+    red = r, green = g, blue = b;
+}
+
+void Color::set(Color clr) {
+    set(clr.red, clr.green, clr.blue);
+}
+
 bool Color::is_equal(int r, int g, int b) {
     if (red == r && green == g && blue == b) {
         return true;
@@ -26,30 +38,53 @@ LED::LED(int pin, enum LEDStatus init_status) {
 void LED::on() {}
 void LED::off() {}
 
+RGBLed::RGBLed(int p_r, int p_g, int p_b) {
+    pin_r = p_r;
+    pin_g = p_g;
+    pin_b = p_b;
+}
+
+RGBLed::RGBLed(
+    int p_r, int p_g, int p_b,
+    Color clr
+) : RGBLed(p_r, p_g, p_b) {
+    color.set(clr);
+}
+
+RGBLed::RGBLed(
+    int p_r, int p_g, int p_b,
+    Color clr, enum LEDType _type
+) : RGBLed(p_r, p_g, p_b, clr) {
+    color.set(clr);
+    type = _type;
+}
+
 void RGBLed::set_color(int r, int g, int b) {
     // change color
     color.red = r & 0xFF;
     color.green = g & 0xFF;
     color.blue = b & 0xFF;
     
-    update();   
+    update();
 }
 
 void RGBLed::update() {
+    Serial.println("update led...");
+
     // write color to led
     int real_r = color.red,
     real_g = color.green,
     real_b = color.blue;
 
-    if (get_type() == COMMON_ANODE) {
-        real_r = 255 - r;
-        real_g = 255 - g;
-        real_b = 255 - b;
+    if (type == COMMON_ANODE) {
+        real_r = 255 - color.red;
+        real_g = 255 - color.green;
+        real_b = 255 - color.blue;
     }
 
-    analogWrite(pin_r, real_r & 0xff);
-    analogWrite(pin_g, real_g & 0xff);
-	analogWrite(pin_b, real_b & 0xff);
+    analogWrite(pin_r, real_r);
+    analogWrite(pin_g, real_g);
+	analogWrite(pin_b, real_b);
 }
 
 void RGBLed::set_color(Color clr) {
@@ -66,5 +101,17 @@ int RGBLed::ensure_state(int required_state, Color clr) {
     }
 }
 
+void RGBLed::print_color() {
+    Serial.print("RGBLed color: red=");
+    Serial.print(color.red);
+    Serial.print(", green=");
+    Serial.print(color.green);
+    Serial.print(", blue=");
+    Serial.println(color.blue);
+}
+
 void RGBLed::set_type(enum LEDType new_type) { type = new_type; }
-enum LEDType RGBLed::get_type() { return type; }
+
+enum LEDType RGBLed::get_type() {
+    return type;
+}

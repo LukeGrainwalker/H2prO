@@ -23,6 +23,7 @@
 #define GYRO_REG_GYRO_SIZE 6
 #define GYRO_REG_TEMP_START 0x41 // start register for temperature data
 #define GYRO_REG_TEMP_SIZE 2
+#define GYRO_1G 16384
 
 struct Acceleration {
     int16_t x, y, z;
