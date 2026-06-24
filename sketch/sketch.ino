@@ -25,12 +25,13 @@ struct TimeThreshold alertThres;
 Gyro gyro = Gyro();
 NormalizedVector base_vec = NormalizedVector(-GYRO_1G, 0, 0);
 RGBLed rgb_led = RGBLed(RED, GREEN, BLUE, Color(0, 0, 255), COMMON_ANODE);
+LED lsd_led = LED(8);
 
 void setup() {
   Serial.begin(9600);
 
   rgb_led.update();
-  //gyro.setup();
+  gyro.setup();
   Serial.println("MPU6050 Initialized.");
 
   last_hydration = millis();
@@ -69,8 +70,10 @@ unsigned int get_seconds(unsigned long time) {
 }
 
 void loop() {
-  if (/*is_drinking()*/false) {
+
+  if (is_drinking()) {
     rgb_led.ensure_state(LED_DRINKING, Color(0, 255, 0));
+    lsd_led.on();
   
     if (!started_drinking) {
       last_hydration = millis();
@@ -80,7 +83,7 @@ void loop() {
     if (started_drinking) {
       started_drinking = false;
       last_hydration = millis();
-
+      lsd_led.off();
       rgb_led.ensure_state(LED_IDLE, Color(0, 0, 255));
     }
 
@@ -106,6 +109,6 @@ void loop() {
   tone(7, NOTE_E4, 250);
   delay(50); */
 
-  delay(1000);
+  delay(200);
 
 }

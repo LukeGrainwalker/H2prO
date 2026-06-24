@@ -3,8 +3,7 @@
 
 #include <Arduino.h>
 #include "H2prO.hpp"
-
-class Buzzer {};
+#include "LED.hpp"
 
 class Action {
 public:

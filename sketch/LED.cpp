@@ -30,13 +30,28 @@ bool Color::is_equal(Color clr) {
     return is_equal(clr.red, clr.green, clr.blue);
 }
 
-LED::LED(int pin, enum LEDStatus init_status) {
-    src_pin = pin;
-    status = init_status;
+LED::LED(int _pin) {
+    pinMode(pin, OUTPUT);
+    pin = _pin;
 }
 
-void LED::on() {}
-void LED::off() {}
+LED::LED(int _pin, bool on_pull_down) : LED(_pin) {
+    on_level = !on_pull_down;
+}
+
+void LED::on() {
+    if (status == LED_OFF) {
+        digitalWrite(pin, on_level);
+        status = LED_ON;
+    }
+}
+
+void LED::off() {
+    if (status == LED_ON) {
+        digitalWrite(pin, !on_level);
+        status = LED_OFF;
+    }
+}
 
 RGBLed::RGBLed(int p_r, int p_g, int p_b) {
     pin_r = p_r;

@@ -19,13 +19,14 @@ enum LEDType { COMMON_ANODE = 0, COMMON_CATHODE };
 
 class LED {
 private:
-  int src_pin;
-  enum LEDStatus status;
+  int pin;
+  bool on_level = HIGH;
+  enum LEDStatus status = LED_OFF;
 public:
   void on();
   void off();
-  LED(int pin, enum LEDStatus init_status);
-  LED(int pin, enum LEDStatus init_status, enum LEDType init_type);
+  LED(int _pin);
+  LED(int _pin, bool on_pull_down);
   enum LEDStatus get_status();
 };
 
