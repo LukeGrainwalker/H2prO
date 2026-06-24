@@ -29,7 +29,7 @@ bool testH2prO(H2prO& obj, enum action a, float time, enum emotion e){
 		case IMPRESSED:
 			cout << "impressed";
 			break;
-		case DEFAULT:
+		case DEFAULT_EMOTION:
 			cout << "default";
 			break;
 		case ANXIOUS:
@@ -51,9 +51,9 @@ bool testH2prO(H2prO& obj, enum action a, float time, enum emotion e){
 int main(int argc, char** argv){
 	cout << "Unit tests: \n";
 	H2prO test(15*60);
-	//cout << (test.process(NONE, 10.0) == DEFAULT) << "\n";
-	testH2prO(test, NONE, 3.0, DEFAULT);
-	testH2prO(test, NONE, 6.0, DEFAULT);
+	//cout << (test.process(NONE, 10.0) == DEFAULT_EMOTION) << "\n";
+	testH2prO(test, NONE, 3.0, DEFAULT_EMOTION);
+	testH2prO(test, NONE, 6.0, DEFAULT_EMOTION);
 	testH2prO(test, LIFT, 2.0, INTERESTED);
 	testH2prO(test, DRINK, 2.0, SURPRISED);
 	return 0;

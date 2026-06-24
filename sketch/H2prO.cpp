@@ -18,7 +18,7 @@ enum emotion H2prO::process(enum action a, float time) {
 			} else if (deltat < 0){
 				device_emotion = SURPRISED;
 			} else {
-				device_emotion = DEFAULT;
+				device_emotion = DEFAULT_EMOTION;
 			}
 			drink_time = 0.0;
 			break;
@@ -31,7 +31,7 @@ enum emotion H2prO::process(enum action a, float time) {
 			} else if (deltat > 30) {
 				device_emotion = SUPORTIVE;
 			} else {
-				device_emotion = DEFAULT;
+				device_emotion = DEFAULT_EMOTION;
 			}
 	}
 	return device_emotion;
