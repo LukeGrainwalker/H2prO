@@ -1,3 +1,6 @@
+#ifndef H2PRO_HPP
+#define H2PRO_HPP
+
 enum action{
 	NONE,
 	DRINK,
@@ -21,7 +24,7 @@ enum emotion {
 class H2prO {
 	public:
 		enum emotion device_emotion = DEFAULT_EMOTION;
-		enum emotion process(enum action, float time);
+		enum emotion process(enum action a, unsigned long time);
 		float getTime();
 		H2prO(float ideal_time) {
 			ideal = ideal_time;
@@ -30,3 +33,5 @@ class H2prO {
 		float drink_time;
 		float ideal;
 };
+
+#endif

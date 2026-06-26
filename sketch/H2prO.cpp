@@ -1,7 +1,9 @@
 #include "H2prO.hpp"
 
-enum emotion H2prO::process(enum action a, float time) {
-	float deltat = drink_time - ideal;
+enum emotion H2prO::process(enum action a, unsigned long time) {
+	drink_time = (time);
+	unsigned int deltat = drink_time - ideal;
+
 	switch(a) {
 		case LIFT:
 			if (deltat > 60*10) {
@@ -29,7 +31,7 @@ enum emotion H2prO::process(enum action a, float time) {
 			} else if (deltat > 60) {
 				device_emotion = ANXIOUS;
 			} else if (deltat > 30) {
-				device_emotion = SUPORTIVE;
+				device_emotion = SUPPORTIVE;
 			} else {
 				device_emotion = DEFAULT_EMOTION;
 			}

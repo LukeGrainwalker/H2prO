@@ -2,39 +2,36 @@
 #include <Arduino.h>
 #include "Output.hpp"
 
-Output::setEmotion(enum emotion e){
+int setEmotion(enum emotion e){
 	switch(e){
 		case SCEPTICAL:
-			color = 0x9905fc;
+			return 0x9905fc;
 			break;
 		case INTERESTED:
-			color = 0xf4fc05;
+			return 0xf4fc05;
 			break;
-		case DISAPOINTED:
-			color = 0x6c0084;
+		case DISAPPOINTED:
+			return 0x6c0084;
 			break;
 		case IMPRESSED:
-			color = 0xe9ff00;
+			return 0xe9ff00;
 			break;
-		case SUPRISED:
-			color = 0x1000ff;
+		case SURPRISED:
+			return 0x1000ff;
 			break;
 		case ANGRY:
-			color = 0xff0000;
+			return 0xff0000;
 			break;
 		case ANXIOUS:
-			color = 0xa500ff;
-			buzzing = true;
+			return 0xa500ff;
+			//buzzing = true;
 			break;
-		case SUPORTIVE:
-			color = 0x1dff00;
+		case SUPPORTIVE:
+			return 0x1dff00;
 			break;
-		case DEFAULT: default: 
-			color = 0;
+		case DEFAULT_EMOTION: default: 
+			return 0;
 			break;
 	}
-	analogWrite(pinr, color & 0xff);
-	analogWrite(ping, (color >> 8) & 0xff);
-	analogWrite(pinb, (color >> 16) & 0xff);
 
 }

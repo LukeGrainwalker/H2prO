@@ -1,7 +1,10 @@
 #include <Wire.h>
+#include "H2prO.hpp"
 #include "Util.hpp"
 #include "LED.hpp"
+#include "Sequence.hpp"
 #include "Gyrosensor.hpp"
+#include "Action.hpp"
 #include "pitches.h"
 
 #define MPU_ADDR 0x68 // default I2C address of MPU6050
@@ -10,28 +13,62 @@ struct TimeThreshold {
   int lower, higher;
 };
 
-int RED = 9;
-int GREEN = 10;
-int BLUE = 11;
-int BUZZER_PIN = 8;
+int BUZZER_PIN = 2;
+int BUZZER_GND = 4;
 
 enum STATE led_state = LED_IDLE;
 unsigned long last_hydration;
 unsigned int time_diff;
 bool started_drinking = false;
+unsigned long time = 0;
 struct TimeThreshold warningThres;
 struct TimeThreshold alertThres;
 
+Color RGB_RED = Color(255, 0, 0);
+Color RGB_GREEN = Color(0, 255, 0);
+Color RGB_BLUE = Color(0, 255, 0);
+Color RGB_BLACK = Color(0, 0, 0);
+
+Color RGB_ORANGE = Color(255, 153, 0);
+Color RGB_PURPLE = Color(128, 0, 128);
+Color RGB_PINK = Color(255, 0, 255);
+Color RGB_LIGHTGREEN = Color(51, 204, 51);
+Color RGB_TURQUOISE = Color(64, 224, 208);
+
+SequenceItem drink_animation_items[] = {
+  {300, &RGB_GREEN},
+  {100, &RGB_ORANGE},
+  {100, &RGB_TURQUOISE},
+  {100, &RGB_PURPLE},
+  {100, &RGB_PINK},
+  {100, &RGB_LIGHTGREEN},
+};
+Sequence drink_animation = Sequence(drink_animation_items, 6, true);
+
+SequenceItem alarm_tones[] = {
+  {250, &NOTE_A3},
+  {500, &NOTE_E4},
+  {250, &NOTE_B3},
+  {250, &NOTE_E4},
+  {1000, (int*)0}
+};
+Sequence alarm_seq = Sequence(alarm_tones, 5, true);
+
 Gyro gyro = Gyro();
-NormalizedVector base_vec = NormalizedVector(-GYRO_1G, 0, 0);
-RGBLed rgb_led = RGBLed(RED, GREEN, BLUE, Color(0, 0, 255), COMMON_ANODE);
-LED lsd_led = LED(8);
+NormalizedVector base_vec = NormalizedVector(0, -GYRO_1G, 0);
+RGBLed rgb_led = RGBLed(9, 10, 11, Color(0, 0, 255), COMMON_ANODE);
+
+//LED lsd_led = LED(8);
+//H2prO h2pro = H2prO();
 
 void setup() {
   Serial.begin(9600);
 
   rgb_led.update();
   gyro.setup();
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(BUZZER_GND, OUTPUT);
+  digitalWrite(BUZZER_GND, LOW);
   Serial.println("MPU6050 Initialized.");
 
   last_hydration = millis();
@@ -49,6 +86,7 @@ bool is_drinking() {
   struct Acceleration acc_data;
 
   gyro.read_acc(&acc_data);
+  //gyro.print_acc(&acc_data);
 
   NormalizedVector vec = NormalizedVector(
     acc_data.x,
@@ -69,21 +107,25 @@ unsigned int get_seconds(unsigned long time) {
   return (time / 1000);
 }
 
+int current_tone = 0;
+
 void loop() {
+  time = millis();
 
   if (is_drinking()) {
-    rgb_led.ensure_state(LED_DRINKING, Color(0, 255, 0));
-    lsd_led.on();
-  
-    if (!started_drinking) {
-      last_hydration = millis();
-      started_drinking = true;
+    struct SequenceItem* next_color = drink_animation.getby_time(time);
+    if (next_color != nullptr) {
+      rgb_led.ensure_color((Color*)next_color->data);
     }
+  
+    last_hydration = time;
+    started_drinking = true;
   } else {
     if (started_drinking) {
+      noTone(BUZZER_PIN);
+
       started_drinking = false;
-      last_hydration = millis();
-      lsd_led.off();
+      last_hydration = time;
       rgb_led.ensure_state(LED_IDLE, Color(0, 0, 255));
     }
 
@@ -94,21 +136,19 @@ void loop() {
     } else if (time_diff >= alertThres.lower && time_diff < alertThres.higher) {
       // ALERT
       rgb_led.ensure_state(LED_ALERT, Color(255, 0, 0));
+
+      int freq;
+      struct SequenceItem* next_tone = alarm_seq.getby_time(time);
+      if (next_tone != nullptr) {
+        freq = *(int*)next_tone->data;
+        if (freq != current_tone) {
+          tone(BUZZER_PIN, freq, next_tone->duration);
+        }
+      }
       // move servo
     } else {
       // DIE
     }
   }
-
-  /* tone(7, NOTE_A3, 250);
-  delay(50);
-  tone(7, NOTE_E4, 500);
-  delay(100);
-  tone(7, NOTE_B3, 250);
-  delay(50);
-  tone(7, NOTE_E4, 250);
-  delay(50); */
-
-  delay(200);
 
 }

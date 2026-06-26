@@ -26,8 +26,8 @@ bool Color::is_equal(int r, int g, int b) {
     }
 };
 
-bool Color::is_equal(Color clr) {
-    return is_equal(clr.red, clr.green, clr.blue);
+bool Color::is_equal(Color* clr) {
+    return is_equal(clr->red, clr->green, clr->blue);
 }
 
 LED::LED(int _pin) {
@@ -110,6 +110,16 @@ int RGBLed::ensure_state(int required_state, Color clr) {
     if (required_state != state) {
         state = required_state;
         set_color(clr.red, clr.green, clr.blue);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int RGBLed::ensure_color(Color* clr) {
+    if (!color.is_equal(clr)) {
+        state = -1;
+        set_color(clr->red, clr->green, clr->blue);
         return 1;
     } else {
         return 0;
