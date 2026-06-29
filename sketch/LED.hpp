@@ -10,7 +10,7 @@ public:
   Color(int r, int g, int b);
   void set(int r, int g, int b);
   void set(Color clr);
-  bool is_equal(Color* clr);
+  bool is_equal(const Color* clr);
   bool is_equal(int r, int g, int b);
 };
 
@@ -51,7 +51,7 @@ public:
   void print_color();
 
   // state management
-  int ensure_color(Color* clr);
+  int ensure_color(const Color* clr);
   int ensure_state(int state, Color clr);
 };
 

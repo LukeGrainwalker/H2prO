@@ -1,37 +1,95 @@
-#include "H2prO.hpp"
-#include <Arduino.h>
 #include "Output.hpp"
+#include "H2prO.hpp"
+#include "colors.hpp"
+#include "sequences.hpp"
 
-int setEmotion(enum emotion e){
-	switch(e){
-		case SCEPTICAL:
-			return 0x9905fc;
-			break;
-		case INTERESTED:
-			return 0xf4fc05;
-			break;
-		case DISAPPOINTED:
-			return 0x6c0084;
-			break;
-		case IMPRESSED:
-			return 0xe9ff00;
-			break;
-		case SURPRISED:
-			return 0x1000ff;
-			break;
-		case ANGRY:
-			return 0xff0000;
-			break;
-		case ANXIOUS:
-			return 0xa500ff;
-			//buzzing = true;
-			break;
-		case SUPPORTIVE:
-			return 0x1dff00;
-			break;
-		case DEFAULT_EMOTION: default: 
-			return 0;
-			break;
-	}
+void Output::init(Sequence** _sequences, RGBLed* _rgb_led, Buzzer* _buzzer /*, Servo _servo  */) {
+    sequences = _sequences;
+    rgb_led = _rgb_led;
+    buzzer = _buzzer;
+}
+
+int Output::process_emotion(enum emotion em) {
+    if (em == current_emotion) {
+        return 0;
+    }
+
+    rgb_led_seq = nullptr;
+    buzzer_seq = nullptr;
+    buzzer->stop();
+
+    bool emotion_implemented = true;
+
+    if (em == NORMAL) {
+        rgb_led->ensure_color(&COLOR_NORMAL);
+    } else if (em == ANXIOUS) {
+        rgb_led->ensure_color(&COLOR_ANXIOUS);
+        buzzer_seq = sequences[SEQUENCE_ANXIOUS_SOUND];
+    } else if (em == ANGRY) {
+        rgb_led->ensure_color(&COLOR_ANGRY);
+
+        buzzer_seq = sequences[SEQUENCE_ALARM];
+        buzzer_seq->reset();
+        buzzer->play();
+        // buzzer alarm, servo
+    } else if (em == HAPPY) {
+        rgb_led->ensure_color(&RGB_GREEN);
+        //rgb_led_seq = sequences[SEQUENCE_DRINK];
+        //rgb_led_seq->reset();
+    } else if (em == DISAPPOINTED) {
+        //rgb_led->ensure_color(&COLOR_DISAPPOINTED);
+        rgb_led_seq = sequences[SEQUENCE_DISAPP];
+        rgb_led_seq->reset();
+    } else if (em == IMPRESSED) {
+        //rgb_led->ensure_color(&COLOR_IMPRESSED);
+        buzzer_seq = sequences[SEQUENCE_IMPRESSED_SOUND];
+        rgb_led_seq = sequences[SEQUENCE_DRINK];
+        rgb_led_seq->reset();
+    } else if (em == SURPRISED) {
+        rgb_led->ensure_color(&RGB_GREEN);
+        buzzer_seq = sequences[SEQUENCE_SURPRISED_SOUND];
+    }  else {
+        emotion_implemented = false;
+    }
+
+    if (emotion_implemented) {
+        current_emotion = em;
+        if (buzzer_seq != nullptr) {
+            buzzer_seq->reset();
+            buzzer->play();
+        }
+    }
+}
+
+void Output::update_buzzer(unsigned long time) {
+    if (buzzer_seq == nullptr) return;
+    
+    struct SequenceItem *next_tone = buzzer_seq->getby_time(time);
+    if (next_tone == nullptr) return;
+
+    int freq = *(int*)next_tone->data;
+    buzzer->ensure_tone(freq, next_tone->duration);
 
 }
+
+void Output::update_rgb_led(unsigned long time) {
+    if (rgb_led_seq == nullptr) return;
+
+    struct SequenceItem *next = rgb_led_seq->getby_time(time);
+    if (next == nullptr) return;
+
+    const Color* color = (const Color*)next->data;
+    /* Serial.print("rgb_led: r=");
+    Serial.print(color->red);
+    Serial.print(", green=");
+    Serial.print(color->green);
+    Serial.print(", blue=");
+    Serial.println(color->blue); */
+    rgb_led->ensure_color(color);
+}
+
+void Output::update(unsigned long time) {
+    update_rgb_led(time);
+    update_buzzer(time);
+}
+

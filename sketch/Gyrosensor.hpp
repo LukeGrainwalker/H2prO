@@ -47,10 +47,9 @@ public:
     Gyro(int address);
     
     int setup(); // power on gyro and do general setup
-    // Read the raw values from the gyro, accelerometer and temperature sensor.
     void raw_acc(struct Acceleration* acc);
     void read_acc(struct Acceleration* acc);
-    void read_all(struct Gyro_RawSample);
+    // Read the raw values from the gyro, accelerometer and temperature sensor.
     void read_all(struct RawSample* sample);
     
     void print_acc(struct Acceleration* acc);

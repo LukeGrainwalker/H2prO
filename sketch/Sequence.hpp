@@ -4,13 +4,14 @@
 struct SequenceItem {
   int duration;
   void *data;
+  bool last;
 };
 
 class Sequence {
 public:
-  Sequence(SequenceItem _items[], int len);
-  Sequence(SequenceItem _items[], int len, bool loop);
-  Sequence(SequenceItem _items[], int len, bool _loop, unsigned int pause);
+  Sequence(SequenceItem _items[]);
+  Sequence(SequenceItem _items[], bool _loop);
+  Sequence(SequenceItem _items[], bool _loop, unsigned int pause);
 
   SequenceItem *getby_time(unsigned long time);
   void reset();

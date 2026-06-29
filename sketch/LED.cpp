@@ -26,7 +26,7 @@ bool Color::is_equal(int r, int g, int b) {
     }
 };
 
-bool Color::is_equal(Color* clr) {
+bool Color::is_equal(const Color* clr) {
     return is_equal(clr->red, clr->green, clr->blue);
 }
 
@@ -116,9 +116,8 @@ int RGBLed::ensure_state(int required_state, Color clr) {
     }
 }
 
-int RGBLed::ensure_color(Color* clr) {
+int RGBLed::ensure_color(const Color* clr) {
     if (!color.is_equal(clr)) {
-        state = -1;
         set_color(clr->red, clr->green, clr->blue);
         return 1;
     } else {

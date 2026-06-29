@@ -1,50 +1,50 @@
 #include "Sequence.hpp"
 
-Sequence::Sequence(SequenceItem _items[], int len) {
-  length = len;
+Sequence::Sequence(SequenceItem _items[]) {
   items = _items;
   finished = false;
   pause_between = 0;
 }
 
-Sequence::Sequence(SequenceItem _items[], int len, bool _loop)
-    : Sequence(_items, len) {
-
+Sequence::Sequence(SequenceItem _items[], bool _loop) : Sequence(_items) {
   loop = _loop;
 }
 
-Sequence::Sequence(SequenceItem _items[], int len, bool _loop, unsigned int pause)
-    : Sequence(_items, len, _loop) {
+Sequence::Sequence(SequenceItem _items[], bool _loop, unsigned int pause)
+    : Sequence(_items, _loop) {
 
-    pause_between = pause;
+  pause_between = pause;
 }
 
 void Sequence::reset() {
-    current_posistion = 0;
-    finished = false;
+  current_posistion = 0;
+  finished = false;
 }
 
 SequenceItem *Sequence::getby_time(unsigned long time) {
-  SequenceItem *current_item;
 
-  if (current_posistion == (length - 1) && !loop || finished) {
+  if (finished && !loop) {
     return nullptr;
   }
 
   unsigned int time_passed = time - last_time;
-  bool do_next_tone = time_passed > items[current_posistion].duration + pause_between;
+  bool do_next_tone =
+      time_passed > items[current_posistion].duration + pause_between;
 
   if (do_next_tone) {
-    if (!loop && (current_posistion + 1 == length)) {
-      finished = true;
-      return nullptr;
+    if (!finished) {
+      current_posistion++;
+    } else {
+      reset();
     }
 
-    current_posistion = (current_posistion + 1) % length;
-    current_item = &items[current_posistion];
     last_time = time;
   }
+  
+  SequenceItem *current_item = &items[current_posistion];
+  if (current_item->last) {
+    finished = true;
+  }
 
-  current_item = &items[current_posistion];
   return current_item;
 }
