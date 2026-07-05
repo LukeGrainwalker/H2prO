@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include <Servo.h>
 #include "H2prO.hpp"
 #include "Util.hpp"
 #include "LED.hpp"
@@ -21,11 +22,11 @@ SequenceItem disappointed_animation[] = {
 };
 
 SequenceItem anxious_sound[] = {
-  {100, (void*)&NOTE_E5},   // 659.25 Hz
-  {100, (void*)&NOTE_F5},   // 698.46 Hz
-  {100, (void*)&NOTE_E5},   // 659.25 Hz
-  {100, (void*)&NOTE_DS5},  // 622.25 Hz
-  {100, (void*)&NOTE_E5, .last=true}   // 659.25 Hz
+  {100, (void*)&NOTE_E5},
+  {100, (void*)&NOTE_F5},
+  {100, (void*)&NOTE_E5},
+  {100, (void*)&NOTE_DS5},
+  {100, (void*)&NOTE_E5, .last=true}
 };
 
 SequenceItem surprised_sound[] = {
@@ -65,6 +66,7 @@ Output outputs = Output();
 Sequence* all_sequences[SEQUENCE_MAX];
 
 void setup() {
+
   Serial.begin(9600);
   gyro.setup();
   Serial.println("MPU6050 Initialized.");
@@ -86,9 +88,6 @@ void setup() {
   h2pro.set_hydration(millis());
 }
 
-/*
-what is drinking?
-*/
 bool is_drinking() {
   float roll = 0;
   struct Acceleration acc_data;
@@ -139,7 +138,6 @@ void loop() {
   }
 
   enum emotion em = h2pro.process(current_action, time);
-  h2pro.print_emotion(em); Serial.println();
   outputs.process_emotion(em);
   outputs.update(time);
   

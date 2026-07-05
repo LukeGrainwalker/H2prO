@@ -22,7 +22,7 @@ private:
 
 public:
   int process_emotion(enum emotion em);
-  void init(Sequence** _sequences, RGBLed* _rgb_led, Buzzer* _buzzer/*, Servo _servo  */);
+  void init(Sequence** _sequences, RGBLed* _rgb_led, Buzzer* _buzzer);
   void update(unsigned long time);
   void update_buzzer(unsigned long time);
   void update_rgb_led(unsigned long time);

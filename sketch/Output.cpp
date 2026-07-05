@@ -3,7 +3,7 @@
 #include "colors.hpp"
 #include "sequences.hpp"
 
-void Output::init(Sequence** _sequences, RGBLed* _rgb_led, Buzzer* _buzzer /*, Servo _servo  */) {
+void Output::init(Sequence** _sequences, RGBLed* _rgb_led, Buzzer* _buzzer) {
     sequences = _sequences;
     rgb_led = _rgb_led;
     buzzer = _buzzer;
@@ -27,21 +27,15 @@ int Output::process_emotion(enum emotion em) {
         buzzer_seq = sequences[SEQUENCE_ANXIOUS_SOUND];
     } else if (em == ANGRY) {
         rgb_led->ensure_color(&COLOR_ANGRY);
-
         buzzer_seq = sequences[SEQUENCE_ALARM];
         buzzer_seq->reset();
         buzzer->play();
-        // buzzer alarm, servo
     } else if (em == HAPPY) {
         rgb_led->ensure_color(&RGB_GREEN);
-        //rgb_led_seq = sequences[SEQUENCE_DRINK];
-        //rgb_led_seq->reset();
     } else if (em == DISAPPOINTED) {
-        //rgb_led->ensure_color(&COLOR_DISAPPOINTED);
         rgb_led_seq = sequences[SEQUENCE_DISAPP];
         rgb_led_seq->reset();
     } else if (em == IMPRESSED) {
-        //rgb_led->ensure_color(&COLOR_IMPRESSED);
         buzzer_seq = sequences[SEQUENCE_IMPRESSED_SOUND];
         rgb_led_seq = sequences[SEQUENCE_DRINK];
         rgb_led_seq->reset();
@@ -79,12 +73,6 @@ void Output::update_rgb_led(unsigned long time) {
     if (next == nullptr) return;
 
     const Color* color = (const Color*)next->data;
-    /* Serial.print("rgb_led: r=");
-    Serial.print(color->red);
-    Serial.print(", green=");
-    Serial.print(color->green);
-    Serial.print(", blue=");
-    Serial.println(color->blue); */
     rgb_led->ensure_color(color);
 }
 
